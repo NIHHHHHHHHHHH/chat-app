@@ -1,5 +1,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatMessageTime } from "@/lib/formatTime";
 
 type MessageBubbleProps = {
   // The message content
@@ -20,13 +21,10 @@ export default function MessageBubble({
   isCurrentUser,
   createdAt,
 }: MessageBubbleProps) {
+
   const fallback = senderName?.charAt(0).toUpperCase() || "U";
 
-  // Format time - we'll improve this
-  const time = new Date(createdAt).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formattedTime = formatMessageTime(createdAt);
 
   return (
     // flex-row-reverse flips layout for current user's messages
@@ -64,7 +62,7 @@ export default function MessageBubble({
 
         {/* Timestamp */}
         <span className="text-xs text-muted-foreground mt-1 px-1">
-          {time}
+          {formattedTime}
         </span>
       </div>
     </div>
