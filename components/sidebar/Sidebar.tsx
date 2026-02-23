@@ -55,7 +55,7 @@ export default function Sidebar({
   };
 
   return (
-    <div className="w-80 h-screen bg-background border-r flex flex-col shrink-0">
+    <div className="w-full md:w-80  h-screen bg-background border-r flex flex-col shrink-0">
 
       {/*  TOP: Title + Search  */}
       <div className="p-4 border-b">
