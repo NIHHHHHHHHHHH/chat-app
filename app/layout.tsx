@@ -1,5 +1,7 @@
+
 import type { Metadata } from "next";
 import "./globals.css";
+import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 
 export const metadata: Metadata = {
   title: "Chat App",
@@ -13,7 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* ConvexClientProvider wraps the entire app */}
+        {/* This means every page has access to Convex + Clerk */}
+        <ConvexClientProvider>
+          {children}
+        </ConvexClientProvider>
+      </body>
     </html>
   );
 }
