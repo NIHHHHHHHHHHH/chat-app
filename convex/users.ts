@@ -96,3 +96,15 @@ export const getAllUsers = query({
     );
   },
 });
+
+
+// QUERY: Get a single user by their ID
+
+export const getUserById = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.userId);
+  },
+});
