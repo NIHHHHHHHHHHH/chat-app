@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/avatar";
 import { Users, Loader2 } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
+import OnlineIndicator from "@/components/ui/OnlineIndicator";
 
 // This component receives searchQuery from parent (Sidebar)
 // and selectedUserId to highlight the active user
@@ -29,6 +30,10 @@ export default function UserList({
   // It automatically re-runs when searchQuery changes
   // It also gives real-time updates when new users sign up!
   const users = useQuery(api.users.getAllUsers, { searchQuery });
+
+  // Get presence for ALL users at once
+  // This is a real-time subscription!
+  const presenceMap = useQuery(api.presence.getAllPresence);
 
   // Show loading state while Convex fetches data
   // useQuery returns undefined while loading
@@ -65,6 +70,11 @@ export default function UserList({
         // Check if this user is currently selected
         const isSelected = selectedUserId === user._id;
 
+        // Look up this user's online status from presenceMap
+        // || false means default to offline if not found
+        const isOnline = presenceMap?.[user._id] || false;
+
+
         return (
           <button
             key={user._id}
@@ -75,11 +85,19 @@ export default function UserList({
               ${isSelected ? "bg-muted" : ""}
             `}
           >
-            {/* User Avatar */}
-            <Avatar className="h-10 w-10 shrink-0">
-              <AvatarImage src={user.imageUrl} alt={user.name} />
-              <AvatarFallback>{fallback}</AvatarFallback>
-            </Avatar>
+            {/* Avatar with online indicator */}
+            {/* relative + absolute positions the dot on avatar */}
+            <div className="relative shrink-0">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.imageUrl} alt={user.name} />
+                <AvatarFallback>{fallback}</AvatarFallback>
+              </Avatar>
+
+              {/* Green/grey dot - bottom right of avatar */}
+              <div className="absolute bottom-0 right-0">
+                <OnlineIndicator isOnline={isOnline} />
+              </div>
+            </div>
 
             {/* User Info */}
             <div className="flex-1 min-w-0">
@@ -87,8 +105,13 @@ export default function UserList({
               <p className="text-sm font-medium truncate">
                 {user.name}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user.email}
+               <p className="text-xs text-muted-foreground truncate">
+                {/* Show Online/Offline text below name */}
+                {isOnline ? (
+                  <span className="text-green-500">Online</span>
+                ) : (
+                  user.email
+                )}
               </p>
             </div>
           </button>

@@ -9,6 +9,8 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import EmptyState from "@/components/ui/EmptyState";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import OnlineIndicator from "@/components/ui/OnlineIndicator";
+
 
 type ChatAreaProps = {
   conversationId: Id<"conversations"> | null;
@@ -22,9 +24,15 @@ export default function ChatArea({
   otherUserId,
   onBack,
 }: ChatAreaProps) {
+
   const otherUser = useQuery(
     api.users.getUserById,
     otherUserId ? { userId: otherUserId } : "skip"
+  );
+
+  const otherUserPresence = useQuery(
+  api.presence.getUserPresence,
+  otherUserId ? { userId: otherUserId } : "skip"
   );
 
   // No conversation selected - only visible on desktop
@@ -57,24 +65,33 @@ export default function ChatArea({
           <ArrowLeft className="h-5 w-5" />
         </button>
 
-        {/* Other user's avatar */}
-        <Avatar className="h-8 w-8">
-          <AvatarImage
-            src={otherUser?.imageUrl}
-            alt={otherUser?.name || "User"}
-          />
-          <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
-        </Avatar>
+          {/* Avatar with online dot */}
+          <div className="relative">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={otherUser?.imageUrl}
+                alt={otherUser?.name || "User"}
+              />
+              <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
+            </Avatar>
+            <div className="absolute bottom-0 right-0">
+              <OnlineIndicator isOnline={otherUserPresence ?? false} size="sm" />
+            </div>
+          </div>
 
-        {/* Other user's name and email */}
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate">
-            {otherUser?.name || "Loading..."}
-          </p>
-          <p className="text-xs text-muted-foreground truncate">
-            {otherUser?.email}
-          </p>
-        </div>
+           {/* Name + online status */}
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm truncate">
+              {otherUser?.name || "Loading..."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {otherUserPresence ? (
+                <span className="text-green-500">Online</span>
+              ) : (
+                "Offline"
+              )}
+            </p>
+          </div>
 
       </div>
 

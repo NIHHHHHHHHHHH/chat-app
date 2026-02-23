@@ -8,10 +8,15 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import Sidebar from "@/components/sidebar/Sidebar";
 import ChatArea from "@/components/chat/ChatArea";
+import { usePresence } from "@/hooks/usePresence";
 
 export default function Home() {
   const { user, isLoaded } = useUser();
   const upsertUser = useMutation(api.users.upsertUser);
+
+  // This single line activates presence tracking!
+  // It marks you online and sends heartbeats automatically
+  usePresence();
 
   // Which conversation is open
   const [conversationId, setConversationId] =
