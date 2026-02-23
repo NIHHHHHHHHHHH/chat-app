@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import MessageBubble from "./MessageBubble";
+import TypingIndicator from "./TypingIndicator";
 import { MessageSquare, Loader2 } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -32,35 +33,46 @@ export default function MessageList({ conversationId }: MessageListProps) {
   }
 
   // Empty state - no messages yet
-  if (messages.length === 0) {
+    if (messages.length === 0) {
     return (
-      <EmptyState
-        icon={MessageSquare}
-        title="No messages yet"
-        description="Say hello and start the conversation! 👋"
-      />
+      <div className="flex flex-col h-full">
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon={MessageSquare}
+            title="No messages yet"
+            description="Say hello and start the conversation! 👋"
+          />
+        </div>
+        {/* Show typing indicator even when no messages */}
+        <TypingIndicator conversationId={conversationId} />
+      </div>
     );
   }
 
-  return (
-    // overflow-y-auto for scrolling
-    <div className="flex-1 overflow-y-auto p-4">
-      {messages.map((message) => {
-        // Check if this message was sent by current user
-        const isCurrentUser =
-          message.sender?.clerkId === user?.id;
+   return (
+    <div className="flex flex-col h-full overflow-hidden">
 
-        return (
-          <MessageBubble
-            key={message._id}
-            content={message.content}
-            senderName={message.sender?.name || "Unknown"}
-            senderImage={message.sender?.imageUrl}
-            isCurrentUser={isCurrentUser}
-            createdAt={message._creationTime}
-          />
-        );
-      })}
+      {/* Messages - scrollable */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.map((message) => {
+          const isCurrentUser =
+            message.sender?.clerkId === user?.id;
+          return (
+            <MessageBubble
+              key={message._id}
+              content={message.content}
+              senderName={message.sender?.name || "Unknown"}
+              senderImage={message.sender?.imageUrl}
+              isCurrentUser={isCurrentUser}
+              createdAt={message._creationTime}
+            />
+          );
+        })}
+      </div>
+
+      {/* Typing indicator - always at bottom */}
+      <TypingIndicator conversationId={conversationId} />
+
     </div>
   );
 }

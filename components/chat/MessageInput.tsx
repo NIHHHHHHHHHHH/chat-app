@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -13,28 +12,35 @@ type MessageInputProps = {
   conversationId: Id<"conversations">;
 };
 
-export default function MessageInput({
-  conversationId,
-}: MessageInputProps) {
-  // Track what user is typing
+export default function MessageInput({ conversationId }: MessageInputProps) {
   const [message, setMessage] = useState("");
-
-  // Track if message is being sent (prevents double sending)
   const [isSending, setIsSending] = useState(false);
 
   const sendMessage = useMutation(api.messages.sendMessage);
+  const updateTyping = useMutation(api.typing.updateTyping);
+
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clean up: stop typing indicator if user navigates away mid-type
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      updateTyping({ conversationId, isTyping: false });
+    };
+  }, [conversationId]);
+
+  const stopTyping = () => {
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    updateTyping({ conversationId, isTyping: false });
+  };
 
   const handleSend = async () => {
-    // Don't send if empty or already sending
     if (!message.trim() || isSending) return;
-
     setIsSending(true);
+    stopTyping();
+
     try {
-      await sendMessage({
-        conversationId,
-        content: message,
-      });
-      // Clear input after sending
+      await sendMessage({ conversationId, content: message });
       setMessage("");
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -43,13 +49,23 @@ export default function MessageInput({
     }
   };
 
-  // Send message when Enter key is pressed
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      // preventDefault stops new line being added
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+
+    updateTyping({ conversationId, isTyping: true });
+
+    // Reset the stop-typing timer on every keystroke
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      updateTyping({ conversationId, isTyping: false });
+    }, 1000);
   };
 
   return (
@@ -57,7 +73,7 @@ export default function MessageInput({
       <Input
         placeholder="Type a message..."
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
         disabled={isSending}
         className="flex-1"
