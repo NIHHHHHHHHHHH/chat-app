@@ -6,7 +6,8 @@ import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import MessageBubble from "./MessageBubble";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Loader2 } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 type MessageListProps = {
   conversationId: Id<"conversations">;
@@ -21,10 +22,11 @@ export default function MessageList({ conversationId }: MessageListProps) {
     conversationId,
   });
 
+    // Loading state - spinner instead of blank
   if (messages === undefined) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-sm text-muted-foreground">Loading messages...</p>
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -32,12 +34,11 @@ export default function MessageList({ conversationId }: MessageListProps) {
   // Empty state - no messages yet
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <MessageSquare className="h-8 w-8 text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">
-          No messages yet. Say hello! 👋
-        </p>
-      </div>
+      <EmptyState
+        icon={MessageSquare}
+        title="No messages yet"
+        description="Say hello and start the conversation! 👋"
+      />
     );
   }
 

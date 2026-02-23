@@ -9,7 +9,8 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
-import { Users } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 // This component receives searchQuery from parent (Sidebar)
 // and selectedUserId to highlight the active user
@@ -31,25 +32,27 @@ export default function UserList({
 
   // Show loading state while Convex fetches data
   // useQuery returns undefined while loading
+  // Loading state
   if (users === undefined) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  // Show empty state when no users found
+  // Empty state - no users found
   if (users.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 px-4">
-        <Users className="h-8 w-8 text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground text-center">
-          {searchQuery
-            ? `No users found for "${searchQuery}"`
-            : "No other users yet"}
-        </p>
-      </div>
+      <EmptyState
+        icon={Users}
+        title={searchQuery ? "No users found" : "No users yet"}
+        description={
+          searchQuery
+            ? `No results for "${searchQuery}"`
+            : "When others sign up they'll appear here"
+        }
+      />
     );
   }
 
