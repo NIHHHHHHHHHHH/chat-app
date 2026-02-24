@@ -67,24 +67,24 @@ export default function MessageInput({ conversationId }: MessageInputProps) {
       updateTyping({ conversationId, isTyping: false });
     }, 1000);
   };
-
+  
   return (
-    <div className="p-4 border-t flex items-center gap-2">
-      <Input
-        placeholder="Type a message..."
-        value={message}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        disabled={isSending}
-        className="flex-1"
-      />
-      <Button
-        onClick={handleSend}
-        disabled={!message.trim() || isSending}
-        size="icon"
-      >
-        <Send className="h-4 w-4" />
-      </Button>
-    </div>
-  );
+  <div className="px-4 py-3 bg-background border-t border-border flex items-center gap-2">
+    <Input
+      placeholder="Write a message..."
+      value={message}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      disabled={isSending}
+      className="flex-1 rounded-full bg-muted/50 border-transparent px-4 focus-visible:ring-primary text-sm"
+    />
+    <button
+      onClick={handleSend}
+      disabled={!message.trim() || isSending}
+      className="bg-priamry h-9 w-9 rounded-full flex items-center justify-center text-primary-foreground transition-opacity disabled:opacity-40 shrink-0"
+    >
+      <Send className="h-4 w-4" />
+    </button>
+  </div>
+);
 }

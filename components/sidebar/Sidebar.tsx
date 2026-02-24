@@ -6,12 +6,8 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { LogOut } from "lucide-react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { LogOut, MessageCircle } from "lucide-react";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import SearchBar from "./SearchBar";
 import UserList from "./UserList";
 
@@ -62,16 +58,22 @@ export default function Sidebar({
   };
 
   return (
-    <div className="w-full md:w-80 h-screen bg-background border-r flex flex-col shrink-0">
+    <div className="w-full md:w-80 h-screen bg-background border-r border-border flex flex-col shrink-0 shadow-sm">
 
-      {/* TOP */}
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-bold mb-3">Messages</h1>
+      {/* TOP — App title + search */}
+      <div className="px-4 pt-5 pb-3 border-b border-border bg-background">
+        {/* App branding */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="bg-primary h-8 w-8 rounded-full flex items-center justify-center">
+            <MessageCircle className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <h1 className="text-lg font-bold tracking-tight">Messages</h1>
+        </div>
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
-      {/* MIDDLE */}
-      <div className="flex-1 overflow-y-auto">
+      {/* MIDDLE — User list */}
+      <div className="flex-1 overflow-y-auto bg-background">
         <UserList
           searchQuery={searchQuery}
           onUserClick={handleUserClick}
@@ -79,23 +81,27 @@ export default function Sidebar({
         />
       </div>
 
-      {/* BOTTOM */}
-      <div className="p-4 border-t flex items-center gap-3">
-        <Avatar className="h-9 w-9">
+      {/* BOTTOM — Current user profile */}
+      <div className="px-4 py-3 border-t border-border bg-background flex items-center gap-3">
+        <Avatar className="h-9 w-9 ring-2 ring-primary/20">
           <AvatarImage src={user?.imageUrl} alt={user?.fullName || "User"} />
-          <AvatarFallback>{avatarFallback}</AvatarFallback>
+          <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+            {avatarFallback}
+          </AvatarFallback>
         </Avatar>
+
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">
+          <p className="text-sm font-semibold truncate">
             {user?.fullName || user?.firstName || "User"}
           </p>
           <p className="text-xs text-muted-foreground truncate">
             {user?.emailAddresses[0]?.emailAddress}
           </p>
         </div>
+
         <button
           onClick={() => signOut()}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           title="Sign out"
         >
           <LogOut className="h-4 w-4" />

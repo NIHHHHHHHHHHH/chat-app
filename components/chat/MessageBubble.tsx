@@ -26,38 +26,37 @@ export default function MessageBubble({
 
   const formattedTime = formatMessageTime(createdAt);
 
-  return (
-    // flex-row-reverse flips layout for current user's messages
+ return (
     <div
-      className={`flex items-end gap-2 mb-4 ${
+      className={`flex items-end gap-2 mb-3 ${
         isCurrentUser ? "flex-row-reverse" : "flex-row"
       }`}
     >
-      {/* Avatar - hidden for current user */}
+      {/* Avatar - only for other user */}
       {!isCurrentUser && (
-        <Avatar className="h-7 w-7 shrink-0">
+        <Avatar className="h-7 w-7 shrink-0 mb-1">
           <AvatarImage src={senderImage} alt={senderName} />
-          <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
+          <AvatarFallback
+            className="bg-primary text-white text-xs font-semibold"
+          >
+            {fallback}
+          </AvatarFallback>
         </Avatar>
       )}
 
-      {/* Message bubble + time */}
+      {/* Bubble + time */}
       <div
         className={`flex flex-col max-w-[70%] ${
           isCurrentUser ? "items-end" : "items-start"
         }`}
       >
-        {/* Message bubble */}
         <div
-          className={`
-            px-4 py-2 rounded-2xl text-sm
-            ${isCurrentUser
-              ? "bg-primary text-primary-foreground rounded-br-sm"
-              : "bg-muted text-foreground rounded-bl-sm"
-            }
-          `}
-        >
-          {content}
+           className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm
+           ${isCurrentUser
+             ? "bg-primary text-primary-foreground rounded-br-sm"
+             : "bg-background text-foreground rounded-bl-sm border border-border"}`}
+           >
+           {content}
         </div>
 
         {/* Timestamp */}

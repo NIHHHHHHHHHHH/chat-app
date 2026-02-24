@@ -65,45 +65,46 @@ useEffect(() => {
   return (
     <div className="flex-1 flex flex-col h-full">
 
-      {/* HEADER */}
-      <div className="p-3 border-b flex items-center gap-3">
-
-        {/* Back button - only on mobile */}
+     {/* HEADER */}
+      <div className="px-4 py-3 border-b border-border bg-background flex items-center gap-3 shadow-sm">
+      
+        {/* Back button mobile */}
         <button
           onClick={onBack}
-          className="md:hidden text-muted-foreground hover:text-foreground transition-colors p-1"
+          className="md:hidden p-1.5 rounded-full text-muted-foreground hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-
-          {/* Avatar with online dot */}
-          <div className="relative">
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src={otherUser?.imageUrl}
-                alt={otherUser?.name || "User"}
-              />
-              <AvatarFallback className="text-xs">{fallback}</AvatarFallback>
-            </Avatar>
-            <div className="absolute bottom-0 right-0">
-              <OnlineIndicator isOnline={otherUserPresence ?? false} size="sm" />
-            </div>
+      
+        {/* Avatar with online dot */}
+        <div className="relative">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={otherUser?.imageUrl} alt={otherUser?.name || "User"} />
+            <AvatarFallback
+              className="bg-primary text-primary-foreground text-sm font-semibold"
+            >
+              {fallback}
+            </AvatarFallback>
+          </Avatar>
+          <div className="absolute bottom-0 right-0">
+            <OnlineIndicator isOnline={otherUserPresence ?? false} size="sm" />
           </div>
-
-           {/* Name + online status */}
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">
-              {otherUser?.name || "Loading..."}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {otherUserPresence ? (
-                <span className="text-green-500">Online</span>
-              ) : (
-                "Offline"
-              )}
-            </p>
-          </div>
-
+        </div>
+      
+        {/* Name + status */}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm truncate">
+            {otherUser?.name || "Loading..."}
+          </p>
+          <p className="text-xs">
+            {otherUserPresence ? (
+              <span className="text-green-500 font-medium">Online</span>
+            ) : (
+              <span className="text-muted-foreground">Offline</span>
+            )}
+          </p>
+        </div>
+      
       </div>
 
       {/* MESSAGES */}

@@ -95,6 +95,7 @@ export default function Home() {
           flex-1
           flex-col
           overflow-hidden
+          bg-muted
         `}
       >
         <ChatArea

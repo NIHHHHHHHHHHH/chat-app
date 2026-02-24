@@ -21,17 +21,12 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-8 px-4">
-      {/* Icon with muted color */}
-      <div className="rounded-full bg-muted p-4 mb-4">
-        <Icon className="h-8 w-8 text-muted-foreground" />
-      </div>
-
-      {/* Title */}
+      <div className="rounded-full bg-primary/10 p-5 mb-4">
+        <Icon className="h-8 w-8 text-primary" />
+     </div>
       <h3 className="text-base font-semibold mb-1 text-center">
         {title}
       </h3>
-
-      {/* Description - only shows if provided */}
       {description && (
         <p className="text-sm text-muted-foreground text-center max-w-50">
           {description}

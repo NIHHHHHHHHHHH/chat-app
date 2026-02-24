@@ -114,14 +114,13 @@ function UserListItem({
   );
 
   return (
-    <button
-      onClick={() => onUserClick(user._id)}
-      className={`
-        flex items-center gap-3 p-3 w-full text-left
-        hover:bg-muted/50 transition-colors
-        ${isSelected ? "bg-muted" : ""}
-      `}
-    >
+        <button
+           onClick={() => onUserClick(user._id)}
+           className={`flex items-center gap-3 px-4 py-3 w-full text-left transition-colors duration-150
+           ${isSelected
+           ? "bg-primary/10 border-l-2 border-primary"
+           : "hover:bg-muted/60 border-l-2 border-transparent"}`}
+         >
       {/* Avatar with online dot */}
       <div className="relative shrink-0">
         <Avatar className="h-10 w-10">

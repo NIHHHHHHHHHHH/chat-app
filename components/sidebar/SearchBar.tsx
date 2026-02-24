@@ -17,21 +17,21 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
     <div className="relative">
 
       {/* Search icon on the left */}
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Search  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
       {/* Input field */}
       <Input
         placeholder="Search users..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-9 pr-9"
+        className="pl-9 pr-9 bg-muted/50 border-transparent rounded-full text-sm focus-visible:ring-primary"
       />
 
       {/* Clear button - only shows when there is text */}
       {value && (
         <button
           onClick={() => onChange("")}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
