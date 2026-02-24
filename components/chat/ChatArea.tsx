@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useMutation } from "convex/react";
+import { useEffect } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import { MessageSquare, ArrowLeft } from "lucide-react";
 import MessageList from "./MessageList";
@@ -34,6 +36,15 @@ export default function ChatArea({
   api.presence.getUserPresence,
   otherUserId ? { userId: otherUserId } : "skip"
   );
+  
+  const markRead = useMutation(api.reads.markConversationRead);
+
+  // Mark as read when conversation opens or new messages arrive
+useEffect(() => {
+  if (conversationId) {
+    markRead({ conversationId });
+  }
+}, [conversationId, markRead]);
 
   // No conversation selected - only visible on desktop
   // because on mobile we show sidebar instead

@@ -127,4 +127,36 @@ export const getUserConversations = query({
       return bTime - aTime;
     });
   },
+
+});
+
+// Get conversationId between current user and another user
+export const getConversationByUser = query({
+  args: {
+    otherUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) =>
+        q.eq("clerkId", identity.subject)
+      )
+      .unique();
+
+    if (!currentUser) return null;
+
+    const conversations = await ctx.db
+      .query("conversations")
+      .collect();
+
+    const existing = conversations.find((conv) =>
+      conv.participants.includes(currentUser._id) &&
+      conv.participants.includes(args.otherUserId)
+    );
+
+    return existing?._id || null;
+  },
 });

@@ -1,4 +1,4 @@
-
+// components/sidebar/Sidebar.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,7 +7,11 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage,} from "@/components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import SearchBar from "./SearchBar";
 import UserList from "./UserList";
 
@@ -29,25 +33,28 @@ export default function Sidebar({
   const [selectedUserId, setSelectedUserId] =
     useState<Id<"users"> | null>(null);
 
-  // This Convex mutation creates or finds a conversation
   const getOrCreateConversation = useMutation(
     api.conversations.getOrCreateConversation
   );
+
+  // Mark conversation as read when opened
+  const markRead = useMutation(api.reads.markConversationRead);
 
   const avatarFallback =
     user?.firstName?.charAt(0) ||
     user?.fullName?.charAt(0) ||
     "U";
 
-  // When user clicks another user in the list
   const handleUserClick = async (userId: Id<"users">) => {
     setSelectedUserId(userId);
     try {
-      // Get or create conversation with this user
       const convId = await getOrCreateConversation({
         otherUserId: userId,
       });
-      // Tell parent (page.tsx) which conversation to show
+
+      // Mark as read immediately when opened
+      await markRead({ conversationId: convId });
+
       onConversationSelect(convId, userId);
     } catch (error) {
       console.error("Failed to open conversation:", error);
@@ -55,15 +62,15 @@ export default function Sidebar({
   };
 
   return (
-    <div className="w-full md:w-80  h-screen bg-background border-r flex flex-col shrink-0">
+    <div className="w-full md:w-80 h-screen bg-background border-r flex flex-col shrink-0">
 
-      {/*  TOP: Title + Search  */}
+      {/* TOP */}
       <div className="p-4 border-b">
         <h1 className="text-xl font-bold mb-3">Messages</h1>
         <SearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
-      {/*  MIDDLE: User List  */}
+      {/* MIDDLE */}
       <div className="flex-1 overflow-y-auto">
         <UserList
           searchQuery={searchQuery}
@@ -72,7 +79,7 @@ export default function Sidebar({
         />
       </div>
 
-      {/*  BOTTOM: Current User  */}
+      {/* BOTTOM */}
       <div className="p-4 border-t flex items-center gap-3">
         <Avatar className="h-9 w-9">
           <AvatarImage src={user?.imageUrl} alt={user?.fullName || "User"} />

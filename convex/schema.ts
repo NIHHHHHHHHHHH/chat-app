@@ -1,4 +1,3 @@
-// convex/schema.ts
 
 // We import these helpers from Convex to define our table structure
 import { defineSchema, defineTable } from "convex/server";
@@ -90,4 +89,15 @@ export default defineSchema({
   })
     // We'll look up typing by conversation
     .index("by_conversation", ["conversationId"]),
+
+  // Tracks last time each user read each conversation
+  // When message _creationTime > lastRead → unread!
+  conversationReads: defineTable({
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+    // Timestamp of when user last read this conversation
+    lastReadTime: v.number(),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_user_conversation", ["userId", "conversationId"]),
 });
