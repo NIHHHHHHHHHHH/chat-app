@@ -75,11 +75,13 @@ export default function MessageList({ conversationId }: MessageListProps) {
           return (
             <MessageBubble
               key={message._id}
+              messageId={message._id}
               content={message.content}
               senderName={message.sender?.name || "Unknown"}
               senderImage={message.sender?.imageUrl}
               isCurrentUser={isCurrentUser}
               createdAt={message._creationTime}
+              isDeleted={message.isDeleted}
             />
           );
         })}

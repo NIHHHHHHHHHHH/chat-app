@@ -50,6 +50,8 @@ export default defineSchema({
 
     // The actual text content of the message
     content: v.string(),
+     // soft delete flag
+    isDeleted: v.optional(v.boolean()),
   })
     // We'll often fetch all messages in a conversation
     // so we index by conversationId for fast lookup
