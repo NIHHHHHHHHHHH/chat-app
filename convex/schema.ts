@@ -102,4 +102,19 @@ export default defineSchema({
   })
     .index("by_conversation", ["conversationId"])
     .index("by_user_conversation", ["userId", "conversationId"]),
+
+
+   // Each record = one user reacted with one emoji on one message
+   reactions: defineTable({
+   messageId: v.id("messages"),
+   userId: v.id("users"),
+   // The emoji itself stored as string
+   emoji: v.string(),
+ })
+   // Index by message so we can fetch all reactions for a message
+   .index("by_message", ["messageId"])
+   // Index by message + user so we can check if user already reacted
+   .index("by_message_user", ["messageId", "userId"]),
 });
+
+

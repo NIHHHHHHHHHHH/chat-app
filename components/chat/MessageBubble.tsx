@@ -6,6 +6,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatMessageTime } from "@/lib/formatTime";
 import { Trash2 } from "lucide-react";
+import ReactionBar from "./ReactionBar";
 
 type MessageBubbleProps = {
   messageId: Id<"messages">;
@@ -56,7 +57,7 @@ export default function MessageBubble({
 
  return (
     <div
-      className={`flex items-end gap-2 mb-3 ${
+      className={`flex items-end gap-2 mb-3 group ${
         isCurrentUser ? "flex-row-reverse" : "flex-row"
       }`}
     >
@@ -74,7 +75,7 @@ export default function MessageBubble({
 
       {/* Delete Button + Bubble + time */}
       <div
-        className={`flex items-center gap-2 max-w-[70%] ${
+        className={`flex items-end gap-2 max-w-[70%] ${
           isCurrentUser ? "flex-row-reverse" : "flex-row"
         }`}
       onMouseEnter={() => setIsHovered(true)}
@@ -118,6 +119,13 @@ export default function MessageBubble({
         <span className="text-xs text-muted-foreground mt-1 px-1">
           {formattedTime}
         </span>
+
+          {/* Reactions  */}
+         <ReactionBar
+           messageId={messageId}
+           isCurrentUser={isCurrentUser}
+           isDeleted={isDeleted}
+         />
        </div>
       </div>
     </div>
