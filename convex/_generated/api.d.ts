@@ -9,6 +9,7 @@
  */
 
 import type * as conversations from "../conversations.js";
+import type * as matchmaking from "../matchmaking.js";
 import type * as messages from "../messages.js";
 import type * as presence from "../presence.js";
 import type * as reactions from "../reactions.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   conversations: typeof conversations;
+  matchmaking: typeof matchmaking;
   messages: typeof messages;
   presence: typeof presence;
   reactions: typeof reactions;
