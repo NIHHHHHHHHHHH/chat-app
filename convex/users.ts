@@ -34,6 +34,7 @@ export const upsertUser = mutation({
       name: args.name,
       email: args.email,
       imageUrl: args.imageUrl,
+      type: "registered",
     });
 
     return userId;

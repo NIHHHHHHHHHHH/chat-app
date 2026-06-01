@@ -51,6 +51,7 @@ export const getOrCreateConversation = mutation({
     // Step 5: Otherwise create a new conversation
     const conversationId = await ctx.db.insert("conversations", {
       participants: [currentUser._id, args.otherUserId],
+      type: "friends",
     });
 
     return conversationId;

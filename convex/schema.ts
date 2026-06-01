@@ -1,120 +1,145 @@
-
-// We import these helpers from Convex to define our table structure
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// defineSchema() tells Convex what our database looks like
-// Think of it like creating a blueprint for all our tables
 export default defineSchema({
 
   // USERS TABLE
-  // Stores every person who signs up
-
+  // handles both registered (clerk) and anonymous (guest) users
   users: defineTable({
-    // Clerk gives every user a unique ID when they sign up
-    // We store it here so we can connect Clerk user → Convex user
-    clerkId: v.string(),
+    // only set for registered users, guests won't have this
+    clerkId: v.optional(v.string()),
 
-    // User's display name (from their Clerk profile)
     name: v.string(),
-
-    // User's profile picture URL (from Clerk or Google)
-    // optional() means this field is not required
     imageUrl: v.optional(v.string()),
 
-    // User's email address
-    email: v.string(),
+    // only set for registered users
+    email: v.optional(v.string()),
+
+    // "registered" = signed in via clerk
+    // "guest" = anonymous, has a guestId in localStorage
+    type: v.optional(v.union(v.literal("registered"), v.literal("guest"))),
+
+    // random uuid we generate on the client and store in localStorage
+    // only set for guests, used to identify them across page refreshes
+    guestId: v.optional(v.string()),
   })
-    // index means "make searching by this field fast"
-    // We'll often need to find a user by their clerkId
-    .index("by_clerk_id", ["clerkId"]),
+    .index("by_clerk_id", ["clerkId"])
+    // so we can look up a guest by their localStorage id
+    .index("by_guest_id", ["guestId"]),
+
 
   // CONVERSATIONS TABLE
-  // Stores a chat session between 2 users
-
   conversations: defineTable({
-    // Array of exactly 2 user IDs (the two people in the chat)
-    // v.id("users") means "an ID that points to the users table"
     participants: v.array(v.id("users")),
+
+    // "random" = matched via matchmaking queue (can be guests or registered)
+    // "friends" = explicitly added friends (registered users only)
+    type: v.optional(v.union(v.literal("random"), v.literal("friends"))),
+
+    // random chat sessions end when either user disconnects
+    // we mark them inactive instead of deleting so messages persist
+    isActive: v.optional(v.boolean()),
   }),
 
+
   // MESSAGES TABLE
-  // Stores every message sent in a conversation
-
   messages: defineTable({
-    // Which conversation this message belongs to
     conversationId: v.id("conversations"),
-
-    // Who sent this message (points to users table)
     senderId: v.id("users"),
-
-    // The actual text content of the message
     content: v.string(),
-     // soft delete flag
+
+    // "text" = regular message
+    // "image" = cloudinary image upload
+    messageType: v.optional(v.union(v.literal("text"), v.literal("image"))),
+
+    // only set when messageType is "image"
+    // this is the cloudinary url
+    imageUrl: v.optional(v.string()),
+
     isDeleted: v.optional(v.boolean()),
   })
-    // We'll often fetch all messages in a conversation
-    // so we index by conversationId for fast lookup
     .index("by_conversation", ["conversationId"]),
+
 
   // PRESENCE TABLE
-  // Tracks who is online right now
-
   presence: defineTable({
-    // Which user this presence record belongs to
     userId: v.id("users"),
-
-    // When did they last "ping" the server
-    // We use this to determine if they're still online
-    // (if last ping was more than 30 seconds ago → offline)
     lastSeen: v.number(),
-
-    // Are they currently online? true or false
     isOnline: v.boolean(),
   })
-    // We'll look up presence by userId often
     .index("by_user", ["userId"]),
 
+
   // TYPING TABLE
-  // Tracks who is currently typing in a conversation
   typing: defineTable({
-    // Which conversation they're typing in
     conversationId: v.id("conversations"),
-
-    // Who is typing
     userId: v.id("users"),
-
-    // Timestamp of when they last typed
-    // We use this to auto-clear the indicator after 2 seconds
-    
     lastTypedAt: v.number(),
   })
-    // We'll look up typing by conversation
     .index("by_conversation", ["conversationId"]),
 
-  // Tracks last time each user read each conversation
-  // When message _creationTime > lastRead → unread!
+
+  // CONVERSATION READS TABLE
   conversationReads: defineTable({
     conversationId: v.id("conversations"),
     userId: v.id("users"),
-    // Timestamp of when user last read this conversation
     lastReadTime: v.number(),
   })
     .index("by_conversation", ["conversationId"])
     .index("by_user_conversation", ["userId", "conversationId"]),
 
 
-   // Each record = one user reacted with one emoji on one message
-   reactions: defineTable({
-   messageId: v.id("messages"),
-   userId: v.id("users"),
-   // The emoji itself stored as string
-   emoji: v.string(),
- })
-   // Index by message so we can fetch all reactions for a message
-   .index("by_message", ["messageId"])
-   // Index by message + user so we can check if user already reacted
-   .index("by_message_user", ["messageId", "userId"]),
+  // REACTIONS TABLE
+  reactions: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    emoji: v.string(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_message_user", ["messageId", "userId"]),
+
+
+  // MATCHMAKING TABLE
+  // queue of users waiting to be matched with a stranger
+  // both guests and registered users can join
+  matchmaking: defineTable({
+    userId: v.id("users"),
+
+    // when they joined the queue, used for timeout/ordering
+    joinedAt: v.number(),
+
+    // "waiting" = sitting in queue
+    // "matched" = paired with someone, conversation created
+    status: v.union(v.literal("waiting"), v.literal("matched")),
+
+    // set once matched, points to the conversation created for them
+    conversationId: v.optional(v.id("conversations")),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
+
+
+  // FRIENDS TABLE
+  // tracks friend relationships between registered users
+  friends: defineTable({
+    // who sent the request
+    requesterId: v.id("users"),
+
+    // who received the request
+    receiverId: v.id("users"),
+
+    // "pending" = request sent, not yet accepted
+    // "accepted" = friends
+    // "rejected" = declined (we keep record so requester can't spam)
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("rejected")
+    ),
+  })
+    .index("by_requester", ["requesterId"])
+    .index("by_receiver", ["receiverId"])
+    // lets us check if friendship exists between two specific users fast
+    .index("by_requester_receiver", ["requesterId", "receiverId"]),
+
 });
-
-
