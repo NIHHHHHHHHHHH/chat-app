@@ -1,57 +1,45 @@
-
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 
-// MUTATION: Get or Create Conversation
+// MUTATION: Get or Create Friends Conversation
+// only for registered users, called when clicking a friend to chat
 
-// When you click a user, this finds existing conversation
-// or creates a new one between you two
 export const getOrCreateConversation = mutation({
   args: {
-    // The other user's ID
     otherUserId: v.id("users"),
   },
 
   handler: async (ctx, args) => {
-    // Step 1: Get current logged in user
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    // Step 2: Find current user in database
     const currentUser = await ctx.db
       .query("users")
-      .withIndex("by_clerk_id", (q) =>
-        q.eq("clerkId", identity.subject)
-      )
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
     if (!currentUser) throw new Error("User not found");
 
-    // Step 3: Check if conversation already exists
-    // Get all conversations and find one with both users
     const existingConversations = await ctx.db
       .query("conversations")
       .collect();
 
-    // Find conversation that has BOTH users as participants
+    // only match against "friends" type conversations
     const existing = existingConversations.find((conv) => {
-      const participants = conv.participants;
       return (
-        participants.includes(currentUser._id) &&
-        participants.includes(args.otherUserId)
+        conv.type === "friends" &&
+        conv.participants.includes(currentUser._id) &&
+        conv.participants.includes(args.otherUserId)
       );
     });
 
-    // Step 4: If conversation exists, return its ID
-    if (existing) {
-      return existing._id;
-    }
+    if (existing) return existing._id;
 
-    // Step 5: Otherwise create a new conversation
     const conversationId = await ctx.db.insert("conversations", {
       participants: [currentUser._id, args.otherUserId],
       type: "friends",
+      isActive: true,
     });
 
     return conversationId;
@@ -59,57 +47,83 @@ export const getOrCreateConversation = mutation({
 });
 
 
-// QUERY: Get All Conversations for current user
+// MUTATION: Create Random Chat Conversation
+// called by matchmaking logic when two users are paired
+// works for both guests and registered users
+
+export const createRandomConversation = mutation({
+  args: {
+    userOneId: v.id("users"),
+    userTwoId: v.id("users"),
+  },
+
+  handler: async (ctx, args) => {
+    const conversationId = await ctx.db.insert("conversations", {
+      participants: [args.userOneId, args.userTwoId],
+      type: "random",
+      isActive: true,
+    });
+
+    return conversationId;
+  },
+});
+
+
+// MUTATION: End a Random Chat Session
+// marks conversation inactive when either user disconnects or leaves
+
+export const endRandomConversation = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.conversationId, {
+      isActive: false,
+    });
+  },
+});
+
+
+// QUERY: Get All Conversations for current registered user
 
 export const getUserConversations = query({
   args: {},
 
   handler: async (ctx) => {
-    // Get current user
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
     const currentUser = await ctx.db
       .query("users")
-      .withIndex("by_clerk_id", (q) =>
-        q.eq("clerkId", identity.subject)
-      )
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
     if (!currentUser) return [];
 
-    // Get all conversations
     const allConversations = await ctx.db
       .query("conversations")
       .collect();
 
-    // Filter only conversations where current user is a participant
     const myConversations = allConversations.filter((conv) =>
       conv.participants.includes(currentUser._id)
     );
 
-    // For each conversation, get the other user's details
-    // and the last message preview
     const conversationsWithDetails = await Promise.all(
       myConversations.map(async (conv) => {
-        // Find the other participant (not current user)
         const otherUserId = conv.participants.find(
           (id) => id !== currentUser._id
         );
 
-        // Get other user's info
-        const otherUser = otherUserId
-          ? await ctx.db.get(otherUserId)
-          : null;
+        const otherUser = otherUserId ? await ctx.db.get(otherUserId) : null;
 
-        // Get the last message in this conversation
         const messages = await ctx.db
           .query("messages")
           .withIndex("by_conversation", (q) =>
             q.eq("conversationId", conv._id)
           )
-          .order("desc") // newest first
-          .take(1); // only get 1
+          .order("desc")
+          .take(1);
 
         const lastMessage = messages[0] || null;
 
@@ -121,17 +135,30 @@ export const getUserConversations = query({
       })
     );
 
-    // Sort by last message time (most recent first)
     return conversationsWithDetails.sort((a, b) => {
       const aTime = a.lastMessage?._creationTime || a._creationTime;
       const bTime = b.lastMessage?._creationTime || b._creationTime;
       return bTime - aTime;
     });
   },
-
 });
 
-// Get conversationId between current user and another user
+
+// QUERY: Get a single conversation by ID
+// used by both guest and registered users to load a chat
+
+export const getConversationById = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.conversationId);
+  },
+});
+
+
+// QUERY: Get conversationId between current user and another user
+
 export const getConversationByUser = query({
   args: {
     otherUserId: v.id("users"),
@@ -142,20 +169,18 @@ export const getConversationByUser = query({
 
     const currentUser = await ctx.db
       .query("users")
-      .withIndex("by_clerk_id", (q) =>
-        q.eq("clerkId", identity.subject)
-      )
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
     if (!currentUser) return null;
 
-    const conversations = await ctx.db
-      .query("conversations")
-      .collect();
+    const conversations = await ctx.db.query("conversations").collect();
 
-    const existing = conversations.find((conv) =>
-      conv.participants.includes(currentUser._id) &&
-      conv.participants.includes(args.otherUserId)
+    const existing = conversations.find(
+      (conv) =>
+        conv.type === "friends" &&
+        conv.participants.includes(currentUser._id) &&
+        conv.participants.includes(args.otherUserId)
     );
 
     return existing?._id || null;
